@@ -1,0 +1,20 @@
+# togo plugin manifest. `togo install <owner>/<repo>` reads this to wire the
+# plugin into a project (routes, migrations, frontend assets, CLI commands).
+name: example
+description: An example togo plugin (backend + frontend + CLI command).
+priority: 50            # boot order, 0–100 (lower boots first)
+
+# Backend: Go package implementing togo.Plugin (auto-discovered on install).
+backend:
+  package: github.com/togo-framework/plugin-template
+
+# Database migrations contributed by the plugin (Atlas HCL or SQL).
+migrations:
+  - db/atlas/schema
+
+# Frontend assets/pages served by the plugin (mounted under the app's web app).
+frontend:
+  dir: web
+
+# Extra CLI verbs the plugin adds (built as `togo-<name>` and dropped on PATH).
+commands: []
