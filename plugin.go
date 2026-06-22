@@ -1,32 +1,31 @@
-// Package plugin is a starter togo plugin. Copy this repository (or use
-// `togo make:plugin <name>`) and implement the lifecycle methods below.
+// Package plugin is a starter togo plugin shaped like a mini app: a
+// self-registering backend provider, an injectable frontend (web/), its own
+// internal packages, and a .claude/ agent kit. Copy this repo or run
+// `togo make:plugin <name>` to scaffold a new one in the same shape.
 //
-// A plugin satisfies the togo.Plugin contract:
-//
-//	Name() string
-//	Priority() int
-//	Register(k *togo.Kernel) error
-//	Boot(ctx context.Context, k *togo.Kernel) error
-//
-// On `togo install <owner>/<repo>`, the manifest (togo.plugin.yaml) is read and
-// this package is registered with the kernel for auto-discovery. The togo import
-// is added once you wire the methods to the kernel API.
+// On `togo install <owner>/<repo>` the package is blank-imported into the app, so
+// init() registers it with the kernel — no manual wiring.
 package plugin
 
-import "context"
+import (
+	"github.com/togo-framework/togo"
 
-// Plugin is the example plugin. Rename it for your plugin.
-type Plugin struct{}
+	"github.com/togo-framework/plugin-template/internal/example"
+)
 
-// Name uniquely identifies the plugin.
-func (Plugin) Name() string { return "example" }
+// Name is the plugin's stable identifier.
+const Name = "example"
 
-// Priority controls boot order (0–100, lower boots first).
-func (Plugin) Priority() int { return 50 }
-
-// Register binds services, config and hooks. Replace `any` with *togo.Kernel
-// once you depend on github.com/togo-framework/togo.
-func (Plugin) Register(k any) error { return nil }
-
-// Boot mounts routes, registers schema, and runs migrations.
-func (Plugin) Boot(ctx context.Context, k any) error { return nil }
+func init() {
+	togo.RegisterProviderFunc(Name, togo.PriorityLate, func(k *togo.Kernel) error {
+		// Mount backend routes on the kernel router.
+		svc := example.New(k)
+		k.Router.Get("/api/example/ping", svc.Ping)
+		// Expose the service to the rest of the app via the kernel container.
+		k.Set(Name, svc)
+		if k.Log != nil {
+			k.Log.Info("plugin active", "plugin", Name)
+		}
+		return nil
+	})
+}
